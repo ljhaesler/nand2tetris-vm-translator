@@ -66,14 +66,33 @@ class Parser:
         return command
 
     def arg1(self):
+
+        arg = None
+
         if self.command_type == "C_ARITHMETIC":
-            return self.currentcommand
+            arg = self.currentcommand
 
-        return self.currentcommand.split()[1]
+        elif self.command_type == "C_PUSH" or self.command_type == "C_POP":
+            arg = self.currentcommand.split()[1]
 
+        if arg:
+            logger.info(f'{self.currentcommand} arg1: {arg}')
+            return arg
 
+        logger.error(f'{self.command_type} is an unhandled arg1 command type, exiting.')
+        sys.exit(1)
 
-    
+    def arg2(self):
 
+        arg = None
+
+        if self.command_type == "C_PUSH" or self.command_type == "C_POP":
+            arg = int(self.currentcommand.split()[2])
+
+        if arg:
+            logger.info(f'{self.currentcommand} arg2: {arg}')
+
+        logger.error(f'{self.command_type} is an unhandled arg2 command type, exiting.')
+        sys.exit(1)
 
 
