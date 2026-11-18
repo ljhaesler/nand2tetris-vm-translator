@@ -174,3 +174,156 @@ amount of `eq` operations inside the program as we parse it. The same logic
 applies to both `lt` and `gt`.
 
 ## Push/Pop Instructions
+Push and Pop contain three arguments:
+- the command itself (`push` or `pop`)
+- the memory segment
+    -> `local`, `argument`, `this`, `that`, `pointer`, `temp`, `static`
+- the index of that memory segment
+
+In addition, the spec defines the following RAM locations for these segments:
+- SP   -> RAM[0]        (the stack pointer)
+- LCL  -> RAM[1]        (the base address of `local` segment)
+- ARG  -> RAM[2]        (base of `argument`)
+- THIS -> RAM[3]        (base of `this`)
+- THAT -> RAM[4]        (base of `that`)
+- TEMP -> RAM[5-12]     (full `temp` segment`)
+- RAM[16-255]           (full `static` segment`)
+- RAM[256-2047]         (rest of the stack)
+
+This means that the `local`, `argument`, `this`, and `that` segments are stored
+somewhere inside RAM[256-2047]. We won't implement the logic that handles this
+yet, so we can assume it is already handled for us and not worry about it.
+
+### Push/Pop Local/Argument/This/That
+Fundamentally, for an operation such as `push local 2`, we will:
+- find the address held by `local[2]` (RAM[LCL] + 2 where LCL=RAM[1])
+- return the value at that address
+- push it onto our stack (RAM[SP]=RAM[RAM[LCL] + 2] where SP=RAM[0])
+- increment SP at the end
+
+More generally: `RAM[RAM[0]] = RAM[RAM[1] + i], RAM[0]++`
+
+In assembly, `push local 2` would give us:
+```
+@2
+D=A
+@LCL
+A=D+M
+D=M
+@SP
+A=M
+M=D
+@SP
+M=M+1
+```
+
+For the pop operation `pop local 2`, we need to hold two values at once:
+- the address held by `local[2]`
+- the value at `SP--`
+
+The simplest way to do this is to use one of the unused registers: R13, R14, R15
+
+```
+@2
+D=A
+@LCL
+D=D+M
+@R13
+M=D
+@SP
+AM=M-1
+D=M
+@R13
+A=M
+M=D
+```
+
+This works for `push` and `pop` on `local`, `argument`, `this`, `that`, but the
+other segments work differently. 
+
+### Push/Pop Pointer
+The `pointer` segment can be considered a segment of length=2, starting at
+`this` and ending at `that`. => `push pointer 0` pushes THIS onto the stack =>
+`push pointer 1` pushes THAT onto the stack
+
+Therefore, `push pointer 0` looks like:
+```
+@THIS
+D=M
+@SP
+A=M
+M=D
+@SP
+M=M+1
+```
+
+And `pop pointer 0` looks like:
+```
+@SP
+AM=M-1
+D=M
+@THIS
+M=D
+```
+
+The same applies for `push` and `pop` on `pointer 1`, just change `@THIS`
+
+### Push/Pop Temp
+The `temp` segment is very similar, just with a length of 8. I won't bother
+describing it here.
+
+### Push/Pop Constant
+The `constant` value is different. There's no segment to index into, it simply
+pushes the `index` value directly onto the stack. For `push constant 17`:
+
+```
+@17
+D=A
+@SP
+A=M
+M=D
+@SP
+M=M+1
+```
+
+This also means that `pop constant i` is an invalid operation.
+
+### Push/Pop Static
+The static segment is a bit more confusing: remember that our assembler handles
+symbols by allocating them addresses starting from RAM[16]? These addresses
+overlap with the static segment.
+
+Essentially, we want to be able to pop values from the stack, and insert them
+into specific positions in the static segment, which just so happens to be the
+same segment we use to allocate addresses to symbols. These symbols are named
+after the `*.vm` filename, for example `Ball.vm` symbols become:
+`@Ball.0`, `@Ball.1`, `@Ball.2`, ...
+
+This seems odd, and it doesn't stand out as particularly different from how the
+other segments are currently handled, but later on, when we implement our high-
+level language, we will generate a `*.vm` file for each class of that language,
+and combine all of these `*.vm` files into a `.asm` file.
+Essentially, this implementation allows us to differentiate between symbols that
+come from different files.
+
+So in assembly, for a `Ball.vm` file that runs `pop static 8`:
+```
+@SP
+AM=M-1
+D=M
+@Ball.8     // this is translated automatically by our assembler
+            // if this is the first occurence of a static variable
+            // then @Ball.8 = @16
+M=D
+```
+
+For a `push static 8`:
+```
+@Ball.8
+D=M
+@SP
+A=M
+M=D
+@SP
+M=M+1
+```

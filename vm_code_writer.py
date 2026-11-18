@@ -38,8 +38,8 @@ class CodeWriter:
     def writeArithmetic(self, command):
         if command in OPERATIONS:
             if command == "eq" or command == "lt" or command == "gt":
-                return self._getConditionalOp(command) + f" // {command}"
-            return OPERATIONS[command] + f" // {command}"
+                return self._getConditionalOp(command) + f" // {command}\n"
+            return OPERATIONS[command] + f" // {command}\n"
 
         logger.error(f"{command} is not a valid arithmetic command")
         sys.exit(1)
