@@ -91,6 +91,7 @@ class Parser:
 
         if arg:
             logger.info(f'{self.currentcommand} arg2: {arg}')
+            return arg
 
         logger.error(f'{self.command_type} is an unhandled arg2 command type, exiting.')
         sys.exit(1)
