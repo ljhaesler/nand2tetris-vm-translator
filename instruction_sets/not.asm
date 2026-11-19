@@ -1,3 +1,3 @@
-@SP	// `sub` operation
+@SP	// `not` operation
 A=M-1
 M=!M
