@@ -9,7 +9,8 @@ import os
 # if we want efficiency, we can explore which parts of these instruction sets
 # overlap with eachother
 # but fundamentally, the most readable implementation is to handle each
-# possibility 1:1. I might even write each instruction set to its own .asm file
+# possibility 1:1. 
+# I will simply write each instruction set to its own .asm file
 
 SEGMENTS = ["local", "argument", "this", "that",
             "pointer", "temp", "static", "constant"]

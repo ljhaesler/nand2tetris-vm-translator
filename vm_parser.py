@@ -8,17 +8,12 @@ ARITHMETIC = ["add", "sub", "neg",
 logger = logging.getLogger(__name__)
 
 class Parser:
-    def __init__(self, filename):
+    def __init__(self, lines):
+        # lines: the raw lines of a .vm file, e.g. from file.readlines()
         logger.info("Parsing file")
 
-        if filename.endswith(".vm"):
-            with open(filename) as file:
-                self.commands = self._stripAllLines(file.readlines())
-                logger.info(f'File contains {len(self.commands)} lines')
-            return
-
-        logger.error("Input file is not a .vm file, exiting.")
-        sys.exit(1)
+        self.commands = self._stripAllLines(lines)
+        logger.info(f'File contains {len(self.commands)} lines')
 
 
     def _stripAllLines(self, lines):
