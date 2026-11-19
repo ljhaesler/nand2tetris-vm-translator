@@ -15,7 +15,7 @@ class Parser:
             with open(filename) as file:
                 self.commands = self._stripAllLines(file.readlines())
                 logger.info(f'File contains {len(self.commands)} lines')
-            return self
+            return
 
         logger.error("Input file is not a .vm file, exiting.")
         sys.exit(1)
@@ -75,7 +75,7 @@ class Parser:
         elif self.command_type == "C_PUSH" or self.command_type == "C_POP":
             arg = self.currentcommand.split()[1]
 
-        if arg:
+        if not arg == None:
             logger.info(f'{self.currentcommand} arg1: {arg}')
             return arg
 
@@ -89,7 +89,7 @@ class Parser:
         if self.command_type == "C_PUSH" or self.command_type == "C_POP":
             arg = int(self.currentcommand.split()[2])
 
-        if arg:
+        if not arg == None:
             logger.info(f'{self.currentcommand} arg2: {arg}')
             return arg
 
