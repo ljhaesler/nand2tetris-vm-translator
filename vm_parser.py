@@ -42,10 +42,6 @@ class Parser:
         self.currentcommand = self.commands.pop(0)
 
     def commandType(self):
-        # the only commands we really recognise
-        # for the first part of this project:
-        # C_ARITHMETIC, C_PUSH, C_POP
-
         command = None
 
         if self.currentcommand in ARITHMETIC:
@@ -54,6 +50,18 @@ class Parser:
             command = "C_PUSH"
         elif self.currentcommand.startswith("pop"):
             command = "C_POP"
+        elif self.currentcommand.startswith("label"):
+            command = "C_LABEL"
+        elif self.currentcommand.startswith("goto"):
+            command = "C_GOTO"
+        elif self.currentcommand.startswith("if-goto"):
+            command = "C_IF"
+        elif self.currentcommand.startswith("function"):
+            command = "C_FUNCTION"
+        elif self.currentcommand == "return":
+            command = "C_RETURN"
+        elif self.currentcommand.startswith("call"):
+            command = "C_CALL"
 
         logger.info(f'{self.currentcommand} parsed as {command}')
 
@@ -61,13 +69,12 @@ class Parser:
         return command
 
     def arg1(self):
-
         arg = None
 
         if self.command_type == "C_ARITHMETIC":
             arg = self.currentcommand
 
-        elif self.command_type == "C_PUSH" or self.command_type == "C_POP":
+        elif self.command_type in ("C_PUSH", "C_POP", "C_CALL", "C_FUNCTION", "C_GOTO", "C_LABEL", "C_IF"):
             arg = self.currentcommand.split()[1]
 
         if not arg == None:
@@ -81,7 +88,7 @@ class Parser:
 
         arg = None
 
-        if self.command_type == "C_PUSH" or self.command_type == "C_POP":
+        if self.command_type in ("C_PUSH", "C_POP", "C_CALL", "C_FUNCTION"):
             arg = int(self.currentcommand.split()[2])
 
         if not arg == None:

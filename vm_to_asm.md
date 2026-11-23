@@ -1,4 +1,4 @@
-# Translating Our VM Language into Assembly
+# Translating Our VM Language into Assembly (PROJECT 7)
 This is a markdown file used to specify the exact assembly instructions required
 by each VM instruction.
 
