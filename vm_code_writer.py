@@ -32,7 +32,10 @@ class CodeWriter:
     # And then written to a file at the end -> same logic as the assembler
     # Otherwise, if an error is encountered by the parser, the file will
     # be left half-written, or some logic would have to delete the file.
-    # -> no __init__ needed
+
+    def __init__(self):
+        # used to keep track of label/function context
+        self.currentFunction = None
 
     def _readInstructionSet(self, name, folder):
         instruction_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)),
@@ -104,5 +107,32 @@ class CodeWriter:
         else:
             # local, argument, this, that, constant
             values = {"index": index}
+
+        return instructions % values
+
+    def writeLabel(self, label):
+        instructions = self._readInstructionSet("label", "branching")
+        values = {"label": label, "function": ""}
+
+        if self.currentFunction:
+            values["function"] = self.currentFunction
+
+        return instructions % values
+
+    def writeGoto(self, label):
+        instructions = self._readInstructionSet("goto", "branching")
+        values = {"label": label, "function": ""}
+
+        if self.currentFunction:
+            values["function"] = self.currentFunction
+
+        return instructions % values
+
+    def writeIf(self, label):
+        instructions = self._readInstructionSet("if-goto", "branching")
+        values = {"label": label, "function": ""}
+
+        if self.currentFunction:
+            values["function"] = self.currentFunction
 
         return instructions % values

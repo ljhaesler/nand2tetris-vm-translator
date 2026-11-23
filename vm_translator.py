@@ -50,6 +50,14 @@ while parser.hasMoreCommands():
     elif commandType == "C_POP":
         instructions.append(codeWriter.writePushPop("pop", parser.arg1(),
                                                     parser.arg2(), vmFileName))
+    elif commandType == "C_LABEL":
+        instructions.append(codeWriter.writeLabel(parser.arg1()))
+
+    elif commandType == "C_GOTO":
+        instructions.append(codeWriter.writeGoto(parser.arg1()))
+
+    elif commandType == "C_IF":
+        instructions.append(codeWriter.writeIf(parser.arg1()))
     else:
         logger.error(f"{parser.currentcommand} is not a recognised command, exiting.")
         sys.exit(1)
