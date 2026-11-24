@@ -1,0 +1,25 @@
+(%(filename)s.%(function)s)	// `function` operation
+	@%(index)s
+	D=A-1
+	@R13
+	M=D
+	@%(function)s.InitStart
+	D;JGE
+	@%(function)s.InitEnd
+	0;JMP
+(%(function)s.InitStart)
+	@D
+	D=A
+	@ARG
+	A=D+M
+	D=M
+	@SP
+	A=M
+	M=D
+	@SP
+	M=M+1
+	@R13
+	MD=M-1
+	@%(function)s.InitStart
+	D;JGE
+(%(function)s.InitEnd)

@@ -36,6 +36,7 @@ class CodeWriter:
     def __init__(self):
         # used to keep track of label/function context
         self.currentFunction = None
+        self.filename = None
 
     def _readInstructionSet(self, name, folder):
         instruction_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)),
@@ -64,6 +65,9 @@ class CodeWriter:
         logger.error(f"pointer {index} is out of range (0-1), exiting.")
         sys.exit(1)
 
+    def setFilename(self, filename):
+        self.filename = filename
+
     def writeArithmetic(self, command):
         if command not in ARITHMETIC_OPS:
             logger.error(f"{command} is not a valid arithmetic command, exiting.")
@@ -78,7 +82,7 @@ class CodeWriter:
 
         return instructions
 
-    def writePushPop(self, command, segment, index, filename=None):
+    def writePushPop(self, command, segment, index):
         if command != "push" and command != "pop":
             logger.error(f"{command} is not a valid push/pop command, exiting.")
             sys.exit(1)
@@ -91,11 +95,13 @@ class CodeWriter:
             logger.error("pop constant is not a valid command, exiting.")
             sys.exit(1)
 
-        if segment == "static" and filename == None:
-            logger.error("push/pop on static segment requires a filename, exiting.")
+        if segment == "static" and self.filename == None:
+            logger.error("push/pop on a static segment requires a filename" +
+                         "use CodeWriter.setFilename(filename), exiting.")
             sys.exit(1)
 
-        instructions = self._readInstructionSet(f"{command}_{segment}", "pushpop")
+        instructions = self._readInstructionSet(f"{command}_{segment}",
+                                                "pushpop")
 
         # each segment's instruction set needs different values filled in
         if segment == "temp":
@@ -103,7 +109,7 @@ class CodeWriter:
         elif segment == "pointer":
             values = {"address": self._getPointerAddress(index)}
         elif segment == "static":
-            values = {"filename": filename, "index": index}
+            values = {"filename": self.filename, "index": index}
         else:
             # local, argument, this, that, constant
             values = {"index": index}
@@ -134,5 +140,23 @@ class CodeWriter:
 
         if self.currentFunction:
             values["function"] = self.currentFunction
+
+        return instructions % values
+
+    def writeFunction(self, functionName, nVars):
+        # when a function is run, the only thing it does before executing
+        # is fetch its n arguments, held at ARG: `push argument ...`
+        # everything else is handled by the call/return.
+        if self.filename == None:
+            logger.error("declaring a function requires a filename" +
+                         "use CodeWriter.setFilename(filename), exiting.")
+            sys.exit(1)
+
+        instructions = self._readInstructionSet("function", "functions")
+        values = {"filename": self.filename,
+                  "function": functionName,
+                  "index": nVars}
+
+        self.currentFunction = f"{self.filename}.{functionName}"
 
         return instructions % values
