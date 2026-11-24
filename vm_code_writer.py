@@ -168,12 +168,6 @@ class CodeWriter:
         return instructions % values
 
     def writeCall(self, functionName, nArgs):
-        if self.currentFunction == None and functionName != "Sys.init":
-            logger.error("Calling a function requires bootstrapping" +
-                         "use CodeWriter.writeInit(), exiting.")
-            sys.exit(1)
-
-
         instructions = self._readInstructionSet("call", "functions")
         values = {"function": functionName, "nArgs": nArgs,
                   "index": self.callCount}
