@@ -38,6 +38,11 @@ class CodeWriter:
         self.currentFunction = None
         self.filename = None
 
+        # keep track for function call counts
+        # we dont really care how many times X function has been called
+        # we just count how many times any function has been called
+        self.callCount = 0
+
     def _readInstructionSet(self, name, folder):
         instruction_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                            "instruction_sets", folder)
@@ -143,18 +148,30 @@ class CodeWriter:
 
         return instructions % values
 
+    def writeInit(self):
+        # the bootstrap code must be at the very start of the .asm file
+        # It just sets SP=256 then calls the "Sys.init" function
+        setStackPointer = self._readInstructionSet("bootstrap", "functions")
+        callSysInit = self.writeCall("Sys.init", 0)
+
+        return setStackPointer + callSysInit
+
     def writeFunction(self, functionName, nVars):
         # a function declaration needs a number `nVars`
         # This is the quantity of local variables the function uses
         # They're all initialized to 0
-        if self.filename == None:
-            logger.error("declaring a function requires a filename" +
-                         "use CodeWriter.setFilename(filename), exiting.")
-            sys.exit(1)
-
-        self.currentFunction = f"{self.filename}.{functionName}"
+        self.currentFunction = functionName
 
         instructions = self._readInstructionSet("function", "functions")
         values = {"function": self.currentFunction, "nVars": nVars}
+
+        return instructions % values
+
+    def writeCall(self, functionName, nArgs):
+        instructions = self._readInstructionSet("call", "functions")
+        values = {"function": functionName, "nArgs": nArgs,
+                  "index": self.callCount}
+
+        self.callCount += 1
 
         return instructions % values

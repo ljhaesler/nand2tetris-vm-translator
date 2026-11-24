@@ -33,6 +33,7 @@ codeWriter = vm_code_writer.CodeWriter()
 # e.g. "path/to/Ball.vm" -> "Ball"
 # names the static variables (@Ball.0, @Ball.1, ...) and the .asm file
 vmFileName = os.path.basename(args.filename).removesuffix(".vm")
+codeWriter.setFilename(vmFileName)
 
 # every command is translated before the .asm file is opened
 # -> an error never leaves a half-written file behind
@@ -46,10 +47,10 @@ while parser.hasMoreCommands():
         instructions.append(codeWriter.writeArithmetic(parser.arg1()))
     elif commandType == "C_PUSH":
         instructions.append(codeWriter.writePushPop("push", parser.arg1(),
-                                                    parser.arg2(), vmFileName))
+                                                    parser.arg2()))
     elif commandType == "C_POP":
         instructions.append(codeWriter.writePushPop("pop", parser.arg1(),
-                                                    parser.arg2(), vmFileName))
+                                                    parser.arg2()))
     elif commandType == "C_LABEL":
         instructions.append(codeWriter.writeLabel(parser.arg1()))
 
