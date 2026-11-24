@@ -1,25 +1,21 @@
-(%(filename)s.%(function)s)	// `function` operation
-	@%(index)s
-	D=A-1
+(%(function)s)	// `function` operation
+	@%(nVars)s
+	D=A
 	@R13
 	M=D
-	@%(function)s.InitStart
-	D;JGE
 	@%(function)s.InitEnd
-	0;JMP
+	D;JEQ
+
 (%(function)s.InitStart)
-	@D
-	D=A
-	@ARG
-	A=D+M
-	D=M
 	@SP
 	A=M
-	M=D
+	M=0
 	@SP
 	M=M+1
 	@R13
 	MD=M-1
 	@%(function)s.InitStart
-	D;JGE
+	D;JGT
+
 (%(function)s.InitEnd)
+	// function execution code starts here

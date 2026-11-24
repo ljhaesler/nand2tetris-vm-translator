@@ -144,19 +144,17 @@ class CodeWriter:
         return instructions % values
 
     def writeFunction(self, functionName, nVars):
-        # when a function is run, the only thing it does before executing
-        # is fetch its n arguments, held at ARG: `push argument ...`
-        # everything else is handled by the call/return.
+        # a function declaration needs a number `nVars`
+        # This is the quantity of local variables the function uses
+        # They're all initialized to 0
         if self.filename == None:
             logger.error("declaring a function requires a filename" +
                          "use CodeWriter.setFilename(filename), exiting.")
             sys.exit(1)
 
-        instructions = self._readInstructionSet("function", "functions")
-        values = {"filename": self.filename,
-                  "function": functionName,
-                  "index": nVars}
-
         self.currentFunction = f"{self.filename}.{functionName}"
+
+        instructions = self._readInstructionSet("function", "functions")
+        values = {"function": self.currentFunction, "nVars": nVars}
 
         return instructions % values
