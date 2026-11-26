@@ -71,6 +71,7 @@ Sometimes, for testing, a label will be standalone, meaning it should simply use
 
 ### Declaring a Function with Labels
 This logic applies to `function functionName nVars`.
+
 Essentially, the place where a function is declared is also where, immediately
 after the label, we will initialise that function. Initialising a function
 involves ensuring that all of the addresses in memory that the function will
@@ -83,6 +84,7 @@ where `Xxx` is the file name, from `Xxx.vm`, and `foo` is the function name.
 
 ### Calling a Function with Labels
 Logic applies to `call functionName nArgs`.
+
 'Calling' a function means doing quite a few things. I start by storing the
 address of the first ARG defined for the `callee` function into `@R13`, but the
 spec suggests finding this value at the end instead. Fundamentally this doesn't
@@ -108,6 +110,7 @@ The two important concepts here are:
 - what the syntax of the `returnAddress` looks like
 - where exactly the `callee` `ARG` segment is located
 
+#### `returnAddress` Implementation and Syntax
 As for the `returnAddress`, its label, in assembly, is actually dropped
 immediately after the `0;JMP`. We can do this because our assembler works in
 two stages:
@@ -117,36 +120,40 @@ memory, starting from MEM[16]. For example, MEM[22] might store `2442`.
 address values. For example, `@Xxx.foo$ret.1` might get translated to `@22`.
 
 Essentially, when our `returnAddress` for `@Xxx.foo$ret.1` is pushed to the
-stack, we simply push `22` to the stack. Then, on return, we know that we need
-to resume execution, not at address `22`, but at the address held by `@22`,
-which is `2442`, which is also the instruction immediately after our `0;JMP`.
+stack, this is a pointer to the address of the instruction situated immediately
+after `0;JMP`. For example, if `@Xxx.foo$ret.1 = @22`, then `MEM[22] = 2442`,
+and `2442` is the address at which execution has to resume.
 
-This also brings me to the return label syntax: `@Xxx.foo$ret.i`.
-Fundamentally, we need each return label to be unique, because the same
-function can be called multiple times, and returning to the same spot without
-any extra logic would just create a loop. Therefore, we need `i` to be a unique
-number for every new return label.
+In order to pull this off, each label has to follow a specific syntax:
+`@Xxx.foo$ret.i`. Fundamentally, we need each return label to be unique,
+because the same function can be called multiple times, and returning to the
+same spot without any extra logic would just create a loop. Therefore, we need
+`i` to be a unique number for every new return label.
 
 The way I implemented this was simply by incrementing a value in the translator
 by 1 every time there is any `call` operation. We *could* keep track of whether
 or not the same function is being called multiple times, and only increment on
 that condition, but that seems a lot more complicated than it needs to be.
 
-For the `callee` `ARG` segment: a function will necessarily be pushing and
-poping values from the stack. The top `nArgs` values of the stack will be used
-as the arguments for the `callee`. When the `callee` returns, the `caller`
-expects the very top of the stack contain the return value. This is a simple
-enough contract:
+#### The Logic Behind the `callee` `ARG` Segment
+If we consider that a function will necessarily be pushing and popping values
+from the stack, we can simply say that the top `nArgs` values of the stack will
+be used as the arguments for the `callee`. When the `callee` returns, the
+`caller` expects that the very top of the stack will contain the return value.
+This is a simple enough contract:
 
 The `caller` function pushes `nArgs` arguments onto the stack, and 'prepares'
 them for the `callee`. They're technically separated into an `ARG` segment, but
-fundamentally, from the `caller` perspective, those args are just the top of
+fundamentally, from the `caller` perspective, these args are just the top of
 the stack. Once execution is handed to the `callee`, its job is to write a
-return value to the stack, which it does at `ARG[0]`stack to just after the return value. The `caller`
-then continues execution as usual.
+return value to the stack. It does so at `ARG[0]`: inside the context of the
+`caller` function. All the `callee` needs to do from here is point SP to the
+address just after `ARG`. Then, when the `caller` resumes executing, all it
+sees is a return value at the top of the stack.
 
 ### Returning from a Function with Labels
 Logic applies to `return`
+
 'Returning' from a function will restore the stack frame of the `caller`, as
 mentioned above.
 
